@@ -51,3 +51,79 @@ df['FDC (Falha Dissipacao Calor)'] = df['FDC (Falha Dissipacao Calor)'].replace(
 
 # Imprimindo a contagem de valores para verificar a mudança
 print(df['FDC (Falha Dissipacao Calor)'].value_counts())
+
+print(df['FP (Falha Potencia)'].value_counts())
+
+# Unificando os valores que indicam 'sem falha' para 0
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['False', 'N', '0'], 0)
+
+# Unificando os valores que indicam 'com falha' para 1
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['True', '1'], 1)
+
+# Imprimindo a contagem de valores para verificar a mudança
+
+print(df['FA (Falha Aleatoria)'].value_counts())
+
+# Unificando os valores que indicam 'sem falha' para 0
+df['FA (Falha Aleatoria)'] = df['FA (Falha Aleatoria)'].replace(['Não', 'não', '0', '-'], 0)
+
+# Unificando os valores que indicam 'com falha' para 1
+df['FA (Falha Aleatoria)'] = df['FA (Falha Aleatoria)'].replace(['Sim', 'sim', '1'], 1)
+
+# Imprimindo a contagem de valores para verificar a mudança
+print(df['FA (Falha Aleatoria)'].value_counts())
+
+# Analisando as estatísticas das colunas numéricas
+print(df.describe())
+
+# Unificando os valores que indicam 'sem falha' para 0
+df['FA (Falha Aleatoria)'] = df['FA (Falha Aleatoria)'].replace(['Não', 'não', '0', '-'], 0)
+
+# Unificando os valores que indicam 'com falha' para 1
+df['FA (Falha Aleatoria)'] = df['FA (Falha Aleatoria)'].replace(['Sim', 'sim', '1'], 1)
+
+# Imprimindo a contagem de valores para verificar a mudança
+print(df['FA (Falha Aleatoria)'].value_counts())
+
+# Tratando dados faltantes nas colunas numéricas
+colunas_numericas_com_nan = ['temperatura_ar', 'temperatura_processo', 'velocidade_rotacional', 'torque', 'desgaste_da_ferramenta']
+
+for coluna in colunas_numericas_com_nan:
+    mediana = df[coluna].median()
+    df[coluna].fillna(mediana, inplace=True)
+
+# Imprimindo o df.info() novamente para confirmar que não há mais valores nulos
+print(df.info())
+
+# Listando as colunas numéricas com valores faltantes
+colunas_numericas_com_nan = ['temperatura_ar', 'temperatura_processo', 'velocidade_rotacional', 'torque', 'desgaste_da_ferramenta']
+
+# Preenchendo os valores faltantes de cada coluna com a mediana dela
+for coluna in colunas_numericas_com_nan:
+    mediana = df[coluna].median()
+    df[coluna] = df[coluna].fillna(mediana)
+
+# Imprimindo o df.info() novamente para confirmar que não há mais valores nulos
+print(df.info())
+
+print(df['tipo'].value_counts())
+
+# Analisando a coluna 'tipo'
+tipo_dummies = pd.get_dummies(df['tipo'], prefix='tipo')
+
+# Concatenando o novo DataFrame de 'dummies' ao DataFrame original
+df = pd.concat([df, tipo_dummies], axis=1)
+
+# Removendo a coluna 'tipo' original
+df = df.drop('tipo', axis=1)
+
+# Imprimindo o df.head() para ver as novas colunas
+print(df.head())
+
+print(df['id_produto'].value_counts())
+
+# Remove a coluna 'id_produto'
+df = df.drop('id_produto', axis=1)
+
+# Imprimindo o df.info() para verificar se a coluna foi removida
+print(df.info())
