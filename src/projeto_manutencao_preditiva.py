@@ -127,3 +127,31 @@ df = df.drop('id_produto', axis=1)
 
 # Imprimindo o df.info() para verificar se a coluna foi removida
 print(df.info())
+
+# Removendo as colunas que não serão usadas para o modelo
+df = df.drop(['id'], axis=1)
+
+# Separando as variáveis preditoras (X) e a variável-alvo (y)
+X = df.drop('falha_maquina', axis=1)
+y = df['falha_maquina']
+
+# Imprimindo o formato (shape) dos novos DataFrames para verificação
+print("Formato de X:", X.shape)
+print("Formato de y:", y.shape)
+
+print(X.info())
+
+print(df['FP (Falha Potencia)'].value_counts())
+
+print(df['FP (Falha Potencia)'].value_counts())
+
+# Unificando os valores que indicam 'sem falha' para 0
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['Não', 'não', 'N', '0'], 0)
+
+# Unificando os valores que indicam 'com falha' para 1
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['Sim', 'sim', '1', 'y'], 1)
+
+# Imprimindo a contagem de valores para verificar a mudança
+print(df['FP (Falha Potencia)'].value_counts())
+
+print(df['FP (Falha Potencia)'].value_counts())
