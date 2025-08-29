@@ -131,7 +131,14 @@ print(df.info())
 # Removendo as colunas que não serão usadas para o modelo
 df = df.drop(['id'], axis=1)
 
-# Separando as variáveis preditoras (X) e a variável-alvo (y)
+
+# Converte a variável-alvo para um formato numérico
+df['falha_maquina'] = df['falha_maquina'].replace(['sem_falha', 'com_falha'], [0, 1])
+
+# Imprime a contagem de valores para verificar a mudança
+print(df['falha_maquina'].value_counts())
+
+# Separa as variáveis preditoras (X) e a variável-alvo (y)
 X = df.drop('falha_maquina', axis=1)
 y = df['falha_maquina']
 
@@ -156,19 +163,73 @@ print(df['FP (Falha Potencia)'].value_counts())
 
 print(df['FP (Falha Potencia)'].value_counts())
 
+# --- FASE 1: CARREGAMENTO E ENTENDIMENTO DOS DADOS ---
+import pandas as pd
+import os
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-# Dividindo os dados em treino e teste (80% para treino, 20% para teste)
+# Pega o caminho do diretório onde este arquivo de código está
+diretorio_atual = os.path.dirname(os.path.abspath(__file__))
+# Constrói o caminho completo para o arquivo de dados
+caminho_arquivo = os.path.join(diretorio_atual, '..', 'data', 'bootcamp_train.csv')
+# Carrega o arquivo para um DataFrame do pandas
+df = pd.read_csv(caminho_arquivo)
+
+# --- FASE 2: PREPARAÇÃO DE DADOS ---
+# Limpeza e unificação da variável-alvo 'falha_maquina'
+df['falha_maquina'] = df['falha_maquina'].replace(['Não', 'não', 'N', '0'], 0)
+df['falha_maquina'] = df['falha_maquina'].replace(['Sim', 'sim', 'y', '1'], 1)
+
+# Limpeza e unificação das outras colunas de falha
+df['FDF (Falha Desgaste Ferramenta)'] = df['FDF (Falha Desgaste Ferramenta)'].replace(['False', 'N', '0', '-'], 0).replace(['True', '1'], 1).astype(int)
+df['FDC (Falha Dissipacao Calor)'] = df['FDC (Falha Dissipacao Calor)'].replace(['False', 'nao', '0'], 0).replace(['True', 'y', '1'], 1).astype(int)
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['Não', 'não', 'N', '0'], 0).replace(['Sim', 'sim', '1', 'y'], 1).astype(int)
+df['FA (Falha Aleatoria)'] = df['FA (Falha Aleatoria)'].replace(['Não', 'não', '0', '-'], 0).replace(['Sim', 'sim', '1'], 1).astype(int)
+
+# Trata dados faltantes nas colunas numéricas com a mediana
+colunas_numericas_com_nan = ['temperatura_ar', 'temperatura_processo', 'velocidade_rotacional', 'torque', 'desgaste_da_ferramenta']
+for coluna in colunas_numericas_com_nan:
+    mediana = df[coluna].median()
+    df[coluna] = df[coluna].fillna(mediana)
+
+# One-hot encoding para coluna categórica 'tipo'
+tipo_dummies = pd.get_dummies(df['tipo'], prefix='tipo', dtype=int)
+df = pd.concat([df, tipo_dummies], axis=1)
+
+# Removendo colunas não necessárias
+df = df.drop(['id', 'id_produto', 'tipo'], axis=1)
+
+# --- FASE 3: MODELAGEM (CONTINUAÇÃO) ---
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from imblearn.over_sampling import SMOTE
+
+# Separando variáveis preditoras (X) e alvo (y)
+X = df.drop('falha_maquina', axis=1)
+y = df['falha_maquina']
+
+# Divisão treino/teste
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Imprime o formato dos novos DataFrames para verificação
-print("Formato de X_treino:", X_treino.shape)
-print("Formato de X_teste:", X_teste.shape)
-print("Formato de y_treino:", y_treino.shape)
-print("Formato de y_teste:", y_teste.shape)
+# Aplicando o SMOTE para balancear os dados de treino
+smote = SMOTE(random_state=42)
+X_treino_smote, y_treino_smote = smote.fit_resample(X_treino, y_treino)
 
-# Convertendo a coluna 'FP (Falha Potencia)' para um tipo numérico
-df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].astype(int)
+# Verificando a nova contagem de classes após o SMOTE
+print("Contagem de classes antes do SMOTE:", y_treino.value_counts())
+print("Contagem de classes após o SMOTE:", y_treino_smote.value_counts())
 
-# Imprimindo o df.info() para verificar a mudança
-print(df.info())
+# Criando e treinando o modelo com os dados balanceados
+modelo = DecisionTreeClassifier(random_state=42)
+modelo.fit(X_treino_smote, y_treino_smote)
+
+# Previsões
+y_predicao = modelo.predict(X_teste)
+
+# Avaliação
+print("\nAcuracia do modelo:", accuracy_score(y_teste, y_predicao))
+print("\nRelatorio de Classificacao:")
+print(classification_report(y_teste, y_predicao))
