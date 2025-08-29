@@ -233,3 +233,6 @@ y_predicao = modelo.predict(X_teste)
 print("\nAcuracia do modelo:", accuracy_score(y_teste, y_predicao))
 print("\nRelatorio de Classificacao:")
 print(classification_report(y_teste, y_predicao))
+
+# SMOTE (Synthetic Minority Over-sampling Technique) é um algoritmo que cria dados sintéticos para a classe minoritária (a classe 1, ou com_falha).
+#Em vez de apenas duplicar os dados de falha existentes, ele cria novas amostras que são semelhantes, mas não idênticas, às originais. Isso ajuda a "enganar" o modelo, fazendo-o pensar que as duas classes têm uma distribuição mais equilibrada, o que melhora o desempenho na previsão de falhas.
