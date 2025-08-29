@@ -155,3 +155,20 @@ df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].replace(['Sim', 'sim', '1'
 print(df['FP (Falha Potencia)'].value_counts())
 
 print(df['FP (Falha Potencia)'].value_counts())
+
+from sklearn.model_selection import train_test_split
+
+# Dividindo os dados em treino e teste (80% para treino, 20% para teste)
+X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Imprime o formato dos novos DataFrames para verificação
+print("Formato de X_treino:", X_treino.shape)
+print("Formato de X_teste:", X_teste.shape)
+print("Formato de y_treino:", y_treino.shape)
+print("Formato de y_teste:", y_teste.shape)
+
+# Convertendo a coluna 'FP (Falha Potencia)' para um tipo numérico
+df['FP (Falha Potencia)'] = df['FP (Falha Potencia)'].astype(int)
+
+# Imprimindo o df.info() para verificar a mudança
+print(df.info())
