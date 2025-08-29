@@ -166,9 +166,7 @@ print(df['FP (Falha Potencia)'].value_counts())
 # --- FASE 1: CARREGAMENTO E ENTENDIMENTO DOS DADOS ---
 import pandas as pd
 import os
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from pandasql import sqldf
 
 # Pega o caminho do diretório onde este arquivo de código está
 diretorio_atual = os.path.dirname(os.path.abspath(__file__))
@@ -176,6 +174,24 @@ diretorio_atual = os.path.dirname(os.path.abspath(__file__))
 caminho_arquivo = os.path.join(diretorio_atual, '..', 'data', 'bootcamp_train.csv')
 # Carrega o arquivo para um DataFrame do pandas
 df = pd.read_csv(caminho_arquivo)
+
+# Consulta SQL para entendimento inicial dos dados
+query = """
+SELECT
+    "falha_maquina",
+    COUNT(*) AS TotalDeFalhas
+FROM
+    df
+GROUP BY
+    "falha_maquina"
+ORDER BY
+    TotalDeFalhas DESC
+"""
+
+# Executa a consulta SQL no seu DataFrame
+resultado_sql = sqldf(query)
+print("\nResultado da Consulta SQL para contagem de falhas:")
+print(resultado_sql)
 
 # --- FASE 2: PREPARAÇÃO DE DADOS ---
 # Limpeza e unificação da variável-alvo 'falha_maquina'
@@ -201,7 +217,7 @@ df = pd.concat([df, tipo_dummies], axis=1)
 # Removendo colunas não necessárias
 df = df.drop(['id', 'id_produto', 'tipo'], axis=1)
 
-# --- FASE 3: MODELAGEM (CONTINUAÇÃO) ---
+# --- FASE 3: MODELAGEM ---
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score, classification_report
@@ -210,6 +226,9 @@ from imblearn.over_sampling import SMOTE
 # Separando variáveis preditoras (X) e alvo (y)
 X = df.drop('falha_maquina', axis=1)
 y = df['falha_maquina']
+
+# Converte o y para o formato numérico
+y = y.astype(int)
 
 # Divisão treino/teste
 X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -230,9 +249,59 @@ modelo.fit(X_treino_smote, y_treino_smote)
 y_predicao = modelo.predict(X_teste)
 
 # Avaliação
-print("\nAcuracia do modelo:", accuracy_score(y_teste, y_predicao))
+print("Acuracia do modelo:", accuracy_score(y_teste, y_predicao))
 print("\nRelatorio de Classificacao:")
 print(classification_report(y_teste, y_predicao))
+
+# Importa a biblioteca para criar gráficos
+import matplotlib.pyplot as plt
+
+# Cria um histograma da coluna 'temperatura_ar'
+plt.figure(figsize=(10, 6))
+plt.hist(df['temperatura_ar'], bins=20, color='skyblue', edgecolor='black')
+plt.title('Distribuição da Temperatura do Ar')
+plt.xlabel('Temperatura do Ar')
+plt.ylabel('Frequência')
+plt.grid(axis='y', alpha=0.75)
+plt.show()
+
+# Cria um gráfico de barras para a coluna 'tipo'
+tipo_counts = df[['tipo_L', 'tipo_M', 'tipo_H']].sum()
+plt.figure(figsize=(8, 6))
+tipo_counts.plot(kind='bar', color=['skyblue', 'salmon', 'lightgreen'])
+plt.title('Contagem de Máquinas por Tipo')
+plt.xlabel('Tipo de Máquina')
+plt.ylabel('Contagem')
+plt.xticks(rotation=0)
+plt.show()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+# --- Gráfico 1: Matriz de Confusão ---
+# Este gráfico mostra quantos acertos e erros o modelo teve para cada classe
+cm = confusion_matrix(y_teste, y_predicao)
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Sem Falha', 'Com Falha'], yticklabels=['Sem Falha', 'Com Falha'])
+plt.title('Matriz de Confusão')
+plt.xlabel('Predito')
+plt.ylabel('Real')
+plt.show()
+
+# --- Gráfico 2: Importância das Features ---
+# Este gráfico mostra quais colunas foram mais importantes para o modelo tomar a decisão
+import numpy as np
+importances = modelo.feature_importances_
+feature_names = X_treino.columns
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(12, 8))
+plt.title('Importância das Features')
+sns.barplot(x=importances[indices], y=feature_names[indices])
+plt.show()
+
+# Para gerar o gráfico, é preciso fechar a janela do gráfico para continuar o programa.
 
 # SMOTE (Synthetic Minority Over-sampling Technique) é um algoritmo que cria dados sintéticos para a classe minoritária (a classe 1, ou com_falha).
 #Em vez de apenas duplicar os dados de falha existentes, ele cria novas amostras que são semelhantes, mas não idênticas, às originais. Isso ajuda a "enganar" o modelo, fazendo-o pensar que as duas classes têm uma distribuição mais equilibrada, o que melhora o desempenho na previsão de falhas.
